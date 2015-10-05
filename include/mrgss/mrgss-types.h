@@ -18,7 +18,7 @@ extern "C" {
         mrb_int x, y, w, h;
     } mrgss_rect;
 
-
+	void mrb_mrgss_types_gem_init(mrb_state* mrb);
     void mrgss_init_color(mrb_state *mrb);
     void mrgss_init_rect(mrb_state *mrb);
     mrb_int clamp_to_byte(mrb_int value);
