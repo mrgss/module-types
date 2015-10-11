@@ -1,165 +1,168 @@
+#include <SDL/SDL.h>
 #include <mruby.h>
+#include <mruby/data.h>
 #include <mruby/class.h>
-#include <mruby/variable.h>
-#include <mruby/value.h>
-#include <mrgss.h>
-#include <mrgss/mrgss-types.h>
+#include <mrgss/mrgss.h>
+#include <mrgss/mrgss_color.h>
+/**
+ * mruby instance data free
+ */
+static void
+color_free (mrb_state *mrb, void *p)
+{
+  if (p)
+    {
+      free (p);
+    }
+}
 
 /**
- * Set instance variables from constructor
- * @param mrb
- * @param self
- * @param r
- * @param g
- * @param b
- * @param a
+ * free function structure
  */
-static void set_instance_variables(mrb_state *mrb, mrb_value self, mrb_int r, mrb_int g, mrb_int b, mrb_int a) {
-    mrgss_iv_create(mrb, self, "@r", mrb_fixnum_value(r));
-    mrgss_iv_create(mrb, self, "@g", mrb_fixnum_value(g));
-    mrgss_iv_create(mrb, self, "@b", mrb_fixnum_value(b));
-    mrgss_iv_create(mrb, self, "@a", mrb_fixnum_value(a));
-}
+struct mrb_data_type const mrbal_color_data_type ={"Color", color_free};
+
 /**
- * Color Object Constructor
- * @param mrb 
- * @param self
- * @return 
+ *  Color mruby Constructor
  */
 static mrb_value
-initialize(mrb_state *mrb, mrb_value self) {
-    mrb_int r, g, b, a, param_count;
-    param_count = mrb_get_args(mrb, "|iiii", &r, &g, &b, &a);
-    r = clamp_to_byte(r);
-    g = clamp_to_byte(g);
-    b = clamp_to_byte(b);
-    a = clamp_to_byte(a);
-    switch (param_count) {
-        case 0:
-            set_instance_variables(mrb, self, 0, 0, 0, 255);
-            break;
-        case 3:
-            set_instance_variables(mrb, self, r, g, b, 255);
-            break;
-        case 4:
-            set_instance_variables(mrb, self, r, g, b, a);
-            break;
-        default:
-            mrgss_raise(mrb, E_ARGUMENT_ERROR, "Wrong number of arguments");
-            return mrb_nil_value();
-            break;
+initialize (mrb_state* mrb, mrb_value self)
+{
+  mrb_int r, g, b, a;
+  mrb_int count;
+  SDL_Color* color;
+  DATA_TYPE (self) = &mrbal_color_data_type;
+  DATA_PTR (self) = NULL;
+  count = mrb_get_args (mrb, "iii|i", &r, &g, &b, &a);
+  color = mrb_malloc (mrb, sizeof (SDL_Color));
+  color->r = r;
+  color->g = g;
+  color->b = b;
+  if (count < 4)
+    {
+      color->a = 0;
     }
-    return self;
+  else
+    {
+      color->a = a;
+    }
+  DATA_PTR (self) = color;
+  return self;
 }
+
 /**
- * red getter
- * @param mrb
- * @param self
- * @return 
+ * Accessor Color x
  */
-static mrb_value get_r(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@r");
+static mrb_value
+get_r (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  color = DATA_PTR (self);
+  return mrb_fixnum_value (color->r);
 }
+
 /**
- * green getter
- * @param mrb
- * @param self
- * @return 
+ * Modifier Color r
  */
-static mrb_value get_g(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@g");
+static mrb_value
+set_r (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  mrb_int r;
+  mrb_get_args (mrb, "i", &r);
+  color = DATA_PTR (self);
+  color->r = r;
+  return mrb_fixnum_value (r);
 }
+
 /**
- * blue getter
- * @param mrb
- * @param self
- * @return 
+ * Accessor Color g
  */
-static mrb_value get_b(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@b");
+static mrb_value
+get_g (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  color = DATA_PTR (self);
+  return mrb_fixnum_value (color->g);
 }
+
 /**
- * alpha getter
- * @param mrb
- * @param self
- * @return 
+ * Modifier Color g
  */
-static mrb_value get_a(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@a");
+static mrb_value
+set_g (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  mrb_int g;
+  mrb_get_args (mrb, "i", &g);
+  color = DATA_PTR (self);
+  color->g = g;
+  return mrb_fixnum_value (g);
 }
+
 /**
- * red setter
- * @param mrb
- * @param self
- * @return 
+ * Accessor Color b
  */
-static mrb_value set_r(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    val = clamp_to_byte(val);
-    mrgss_iv_create(mrb, self, "@r", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+get_b (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  color = DATA_PTR (self);
+  return mrb_fixnum_value (color->b);
 }
+
 /**
- * green setter
- * @param mrb
- * @param self
- * @return 
+ * Modifier Color b
  */
-static mrb_value set_g(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    val = clamp_to_byte(val);
-    mrgss_iv_create(mrb, self, "@g", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+set_b (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  mrb_int b;
+  mrb_get_args (mrb, "i", &b);
+  color = DATA_PTR (self);
+  color->b = b;
+  return mrb_fixnum_value (b);
 }
+
 /**
- * blue setter
- * @param mrb
- * @param self
- * @return 
+ * Accessor Color a
  */
-static mrb_value set_b(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    val = clamp_to_byte(val);
-    mrgss_iv_create(mrb, self, "@b", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+get_a (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  color = DATA_PTR (self);
+  return mrb_fixnum_value (color->a);
 }
+
 /**
- * alpha setter
- * @param mrb
- * @param self
- * @return 
+ * Modifier Color a
  */
-static mrb_value set_a(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    val = clamp_to_byte(val);
-    mrgss_iv_create(mrb, self, "@a", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+set_a (mrb_state* mrb, mrb_value self)
+{
+  SDL_Color* color;
+  mrb_int a;
+  mrb_get_args (mrb, "i", &a);
+  color = DATA_PTR (self);
+  color->a = a;
+  return mrb_fixnum_value (a);
 }
+
 /**
- * Type initializer
- * @param mrb
+ * Initialize mruby class
  */
-void mrgss_init_color(mrb_state *mrb) {
-    struct RClass *type = mrgss_create_class(mrb, "Color");
-    mrb_define_method(mrb, type, "initialize", initialize, MRB_ARGS_OPT(4));
-    mrb_define_method(mrb, type, "r", get_r, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "g", get_g, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "b", get_b, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "a", get_a, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "r=", set_r, MRB_ARGS_REQ(1));
-    mrb_define_method(mrb, type, "g=", set_g, MRB_ARGS_REQ(1));
-    mrb_define_method(mrb, type, "b=", set_b, MRB_ARGS_REQ(1));
-    mrb_define_method(mrb, type, "a=", set_a, MRB_ARGS_REQ(1));
-    mrb_define_alias(mrb, type, "red", "r");
-    mrb_define_alias(mrb, type, "green", "g");
-    mrb_define_alias(mrb, type, "blue", "b");
-    mrb_define_alias(mrb, type, "alpha", "a");
-    mrb_define_alias(mrb, type, "red=", "r=");
-    mrb_define_alias(mrb, type, "green=", "g=");
-    mrb_define_alias(mrb, type, "blue=", "b=");
-    mrb_define_alias(mrb, type, "alpha=", "a=");
+void mrgss_color_init (mrb_state *mrb)
+{
+  struct RClass *color = mrb_define_class_under (mrb, mrgss_module(),"Color",mrb->object_class);
+  mrb_define_method (mrb, color, "initialize", initialize, MRB_ARGS_REQ (3) | MRB_ARGS_OPT (1));
+  mrb_define_method (mrb, color, "r", get_r, MRB_ARGS_NONE ());
+  mrb_define_method (mrb, color, "r=", set_r, MRB_ARGS_REQ (1));
+  mrb_define_method (mrb, color, "g", get_g, MRB_ARGS_NONE ());
+  mrb_define_method (mrb, color, "g=", set_g, MRB_ARGS_REQ (1));
+  mrb_define_method (mrb, color, "b", get_b, MRB_ARGS_NONE ());
+  mrb_define_method (mrb, color, "b=", set_b, MRB_ARGS_REQ (1));
+  mrb_define_method (mrb, color, "a", get_a, MRB_ARGS_NONE ());
+  mrb_define_method (mrb, color, "a=", set_a, MRB_ARGS_REQ (1));
+  MRB_SET_INSTANCE_TT (color, MRB_TT_DATA);
 }

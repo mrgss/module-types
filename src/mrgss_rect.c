@@ -1,154 +1,150 @@
+#include <SDL/SDL.h>
 #include <mruby.h>
+#include <mruby/data.h>
 #include <mruby/class.h>
-#include <mruby/variable.h>
-#include <mruby/value.h>
-#include <mrgss.h>
-#include <mrgss/mrgss-types.h>
+#include <mrgss/mrgss.h>
+#include <mrgss/mrgss_rect.h>
+
 
 /**
- * Set instance variables from constructor
- * @param mrb
- * @param self
- * @param x
- * @param y
- * @param w
- * @param h
+ * mruby instance data free
  */
-static void set_instance_variables(mrb_state *mrb, mrb_value self, mrb_int x, mrb_int y, mrb_int w, mrb_int h) {
-    mrgss_iv_create(mrb, self, "@x", mrb_fixnum_value(x));
-    mrgss_iv_create(mrb, self, "@y", mrb_fixnum_value(y));
-    mrgss_iv_create(mrb, self, "@w", mrb_fixnum_value(w));
-    mrgss_iv_create(mrb, self, "@h", mrb_fixnum_value(h));
+static void
+rect_free(mrb_state *mrb, void *p) {
+    if (p) {
+        free(p);
+    }
 }
+
 /**
- * Rect Object Constructor
- * @param mrb 
- * @param self
- * @return 
+ * free function structure
+ */
+struct mrb_data_type const mrbal_rect_data_type ={"Rect", rect_free};
+
+/**
+ *  Rect mruby Constructor
  */
 static mrb_value
-initialize(mrb_state *mrb, mrb_value self) {
-    mrb_int x, y, w, h, param_count;
-    param_count = mrb_get_args(mrb, "|iiii", &x, &y, &w, &h);
-    w = w < 0 ? 0 : w;
-    h = h < 0 ? 0 :h;
-    switch (param_count) {
-        case 2:
-            set_instance_variables(mrb, self, x, x, y, y);
-            break;
-        case 4:
-            set_instance_variables(mrb, self, x, y, w, h);
-            break;
-        default:
-            mrgss_raise(mrb, E_ARGUMENT_ERROR, "Wrong number of arguments");
-            return mrb_nil_value();
-            break;
-    }
+initialize(mrb_state* mrb, mrb_value self) {
+    mrb_int x, y, w, h;
+    SDL_Rect* rect;
+    DATA_TYPE(self) = &mrbal_rect_data_type;
+    DATA_PTR(self) = NULL;
+    mrb_get_args(mrb, "iiii", &x, &y, &w, &h);
+    rect = mrb_malloc(mrb, sizeof (SDL_Rect));
+    rect->x = x;
+    rect->y = y;
+    rect->w = w;
+    rect->h = h;
+    DATA_PTR(self) = rect;
     return self;
 }
+
 /**
- * x getter
- * @param mrb
- * @param self
- * @return 
+ * Accessor rect x
  */
-static mrb_value get_x(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@x");
+static mrb_value
+get_x(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    rect = DATA_PTR(self);
+    return mrb_fixnum_value(rect->x);
 }
+
 /**
- * y getter
- * @param mrb
- * @param self
- * @return 
+ * Modifier rect x
  */
-static mrb_value get_y(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@y");
+static mrb_value
+set_x(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    mrb_int x;
+    mrb_get_args(mrb, "i", &x);
+    rect = DATA_PTR(self);
+    rect->x = x;
+    return mrb_fixnum_value(x);
 }
+
 /**
- * width getter
- * @param mrb
- * @param self
- * @return 
+ * Accessor rect y
  */
-static mrb_value get_w(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@w");
+static mrb_value
+get_y(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    rect = DATA_PTR(self);
+    return mrb_fixnum_value(rect->y);
 }
+
 /**
- * height getter
- * @param mrb
- * @param self
- * @return 
+ * Modifier rect y
  */
-static mrb_value get_h(mrb_state *mrb, mrb_value self) {
-    return mrgss_iv_get(mrb, self, "@h");
+static mrb_value
+set_y(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    mrb_int y;
+    mrb_get_args(mrb, "i", &y);
+    rect = DATA_PTR(self);
+    rect->y = y;
+    return mrb_fixnum_value(y);
 }
+
 /**
- * x setter
- * @param mrb
- * @param self
- * @return 
+ * Accessor rect w
  */
-static mrb_value set_x(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    mrgss_iv_create(mrb, self, "@x", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+get_w(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    rect = DATA_PTR(self);
+    return mrb_fixnum_value(rect->w);
 }
+
 /**
- * y setter
- * @param mrb
- * @param self
- * @return 
+ * Modifier rect w
  */
-static mrb_value set_y(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    mrgss_iv_create(mrb, self, "@y", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+set_w(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    mrb_int w;
+    mrb_get_args(mrb, "i", &w);
+    rect = DATA_PTR(self);
+    rect->w = w;
+    return mrb_fixnum_value(w);
 }
+
 /**
- * width setter
- * @param mrb
- * @param self
- * @return 
+ * Accessor rect h
  */
-static mrb_value set_w(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    val = val < 0 ? 0 : val;
-    mrgss_iv_create(mrb, self, "@w", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+get_h(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    rect = DATA_PTR(self);
+    return mrb_fixnum_value(rect->h);
 }
+
 /**
- * height setter
- * @param mrb
- * @param self
- * @return 
+ * Modifier rect h
  */
-static mrb_value set_h(mrb_state *mrb, mrb_value self) {
-    mrb_int val;
-    mrb_get_args(mrb, "i", &val);
-    val = val < 0 ? 0 : val;
-    mrgss_iv_create(mrb, self, "@h", mrb_fixnum_value(val));
-    return self;
+static mrb_value
+set_h(mrb_state* mrb, mrb_value self) {
+    SDL_Rect* rect;
+    mrb_int h;
+    mrb_get_args(mrb, "i", &h);
+    rect = DATA_PTR(self);
+    rect->w = h;
+    return mrb_fixnum_value(h);
 }
+
 /**
- * Type initializer
- * @param mrb
+ * Initialize mruby class
  */
-void mrgss_init_rect(mrb_state *mrb) {
-    struct RClass *type = mrgss_create_class(mrb, "Rect");
-    mrb_define_method(mrb, type, "initialize", initialize, MRB_ARGS_OPT(4));
-    mrb_define_method(mrb, type, "x", get_x, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "y", get_y, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "w", get_w, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "h", get_h, MRB_ARGS_NONE());
-    mrb_define_method(mrb, type, "x=", set_x, MRB_ARGS_REQ(1));
-    mrb_define_method(mrb, type, "y=", set_y, MRB_ARGS_REQ(1));
-    mrb_define_method(mrb, type, "w=", set_w, MRB_ARGS_REQ(1));
-    mrb_define_method(mrb, type, "h=", set_h, MRB_ARGS_REQ(1));
-    mrb_define_alias(mrb, type, "width", "w");
-    mrb_define_alias(mrb, type, "height", "h");
-    mrb_define_alias(mrb, type, "width=", "w=");
-    mrb_define_alias(mrb, type, "height=", "h=");
+void mrgss_rect_init(mrb_state *mrb) {
+    struct RClass *rect = mrb_define_class_under(mrb, mrgss_module(), "Rect", mrb->object_class);
+    mrb_define_method(mrb, rect, "initialize", initialize, MRB_ARGS_REQ(4));
+    mrb_define_method(mrb, rect, "x", get_x, MRB_ARGS_NONE());
+    mrb_define_method(mrb, rect, "x=", set_x, MRB_ARGS_REQ(1));
+    mrb_define_method(mrb, rect, "y", get_y, MRB_ARGS_NONE());
+    mrb_define_method(mrb, rect, "y=", set_y, MRB_ARGS_REQ(1));
+    mrb_define_method(mrb, rect, "w", get_w, MRB_ARGS_NONE());
+    mrb_define_method(mrb, rect, "w=", set_w, MRB_ARGS_REQ(1));
+    mrb_define_method(mrb, rect, "h", get_h, MRB_ARGS_NONE());
+    mrb_define_method(mrb, rect, "h=", set_h, MRB_ARGS_REQ(1));
+    MRB_SET_INSTANCE_TT(rect, MRB_TT_DATA);
 }
